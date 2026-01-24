@@ -1,0 +1,15 @@
+<idea-plugin>
+    <id>com.vkr.validatorgen</id>
+    <name>ValidatorGen Prototype</name>
+    <vendor>VKР</vendor>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow
+                id="ValidatorGen"
+                anchor="right"
+                factoryClass="com.vkr.plugin.ui.ValidatorGenToolWindowFactory"/>
+    </extensions>
+</idea-plugin>
