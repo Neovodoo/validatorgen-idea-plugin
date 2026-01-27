@@ -35,11 +35,8 @@ public class ValidatorGenPanel implements ValidatorGenView {
 
     private final JBTextArea outputArea = new JBTextArea();
 
-    private final JComboBox<String> leftFieldCombo = new JComboBox<>();
-    private final JComboBox<String> rightFieldCombo = new JComboBox<>();
-    private final JComboBox<CompareOp> opCombo = new JComboBox<>(new CompareOp[]{CompareOp.GT});
-    private final JComboBox<String> targetFieldCombo = new JComboBox<>();
-    private final JBTextField messageField = new JBTextField("Field A must be > Field B");
+    private List<String> availableFields = List.of();
+
 
     private final JButton refreshFieldsButton = new JButton("Refresh fields");
     private final JButton addRuleButton = new JButton("Add");
@@ -57,7 +54,10 @@ public class ValidatorGenPanel implements ValidatorGenView {
     // presenter
     private final ValidatorGenPresenter presenter;
 
+    private final Project project;
+
     public ValidatorGenPanel(Project project) {
+        this.project = project;
         dtoDocument = EditorFactory.getInstance().createDocument(defaultDtoText());
         dtoEditor = new EditorTextField(dtoDocument, project, javaFileType, false, false);
         dtoEditor.setOneLineMode(false);
@@ -78,7 +78,6 @@ public class ValidatorGenPanel implements ValidatorGenView {
         var removeRule = new RemoveRuleUseCase(repo);
         var generate = new GenerateCodeUseCase(parser, repo, generator);
 
-// NEW:
         var clipboard = new com.vkr.validatorgen.infrastructure.AwtClipboardService();
         var saver = new com.vkr.validatorgen.infrastructure.DefaultGeneratedCodeSaver(project);
         var copyUc = new CopyGeneratedCodeUseCase(clipboard);
@@ -98,7 +97,20 @@ public class ValidatorGenPanel implements ValidatorGenView {
 
         // handlers
         refreshFieldsButton.addActionListener(e -> presenter.onRefreshFields());
-        addRuleButton.addActionListener(e -> presenter.onAddRule());
+        addRuleButton.addActionListener(e -> {
+            if (availableFields == null || availableFields.isEmpty()) {
+                showOutput("No fields available. Click Refresh fields first.");
+                return;
+            }
+
+            RuleConfigDialog dlg = new RuleConfigDialog(project, availableFields);
+            if (dlg.showAndGet()) { // true если OK
+                RuleDraft draft = dlg.getResultDraft();
+                if (draft != null) {
+                    presenter.onAddRule(draft); // новый метод
+                }
+            }
+        });
         removeRuleButton.addActionListener(e -> presenter.onRemoveRule());
         generateButton.addActionListener(e -> presenter.onGenerateCode());
         copyButton.addActionListener(e -> presenter.onCopyGenerated());
@@ -111,17 +123,6 @@ public class ValidatorGenPanel implements ValidatorGenView {
 
     private void buildUi() {
         JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        controls.add(new JLabel("A:"));
-        controls.add(leftFieldCombo);
-        controls.add(new JLabel("Op:"));
-        controls.add(opCombo);
-        controls.add(new JLabel("B:"));
-        controls.add(rightFieldCombo);
-        controls.add(new JLabel("Target:"));
-        controls.add(targetFieldCombo);
-        controls.add(new JLabel("Message:"));
-        messageField.setPreferredSize(new Dimension(260, messageField.getPreferredSize().height));
-        controls.add(messageField);
         controls.add(refreshFieldsButton);
         controls.add(addRuleButton);
         controls.add(removeRuleButton);
@@ -164,15 +165,6 @@ public class ValidatorGenPanel implements ValidatorGenView {
         return dtoEditor.getText();
     }
 
-    @Override
-    public RuleDraft getRuleDraft() {
-        String left = (String) leftFieldCombo.getSelectedItem();
-        String right = (String) rightFieldCombo.getSelectedItem();
-        String target = (String) targetFieldCombo.getSelectedItem();
-        CompareOp op = (CompareOp) opCombo.getSelectedItem();
-        String msg = messageField.getText();
-        return new RuleDraft(left, op, right, target, msg);
-    }
 
     @Override
     public Integer getSelectedRuleIndex() {
@@ -182,19 +174,7 @@ public class ValidatorGenPanel implements ValidatorGenView {
 
     @Override
     public void showFields(List<String> fields) {
-        leftFieldCombo.removeAllItems();
-        rightFieldCombo.removeAllItems();
-        targetFieldCombo.removeAllItems();
-
-        for (String f : fields) {
-            leftFieldCombo.addItem(f);
-            rightFieldCombo.addItem(f);
-            targetFieldCombo.addItem(f);
-        }
-
-        if (!fields.isEmpty()) {
-            targetFieldCombo.setSelectedItem(leftFieldCombo.getSelectedItem());
-        }
+        this.availableFields = fields;
     }
 
     @Override

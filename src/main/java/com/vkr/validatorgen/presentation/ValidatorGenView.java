@@ -4,7 +4,6 @@ import java.util.List;
 
 public interface ValidatorGenView {
     String getDtoText();
-    RuleDraft getRuleDraft();
     Integer getSelectedRuleIndex();
     String getGeneratedCode();
 

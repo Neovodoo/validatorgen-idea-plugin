@@ -42,8 +42,8 @@ public final class ValidatorGenPresenter {
         }
     }
 
-    public void onAddRule() {
-        var res = addRule.execute(view.getRuleDraft());
+    public void onAddRule(RuleDraft draft) {
+        var res = addRule.execute(draft);
         if (res instanceof AddRuleUseCase.Result.Success s) {
             view.refreshRulesTable();
             view.showOutput(s.message());
@@ -51,6 +51,7 @@ public final class ValidatorGenPresenter {
             view.showOutput(e.message());
         }
     }
+
 
     public void onRemoveRule() {
         var res = removeRule.execute(view.getSelectedRuleIndex());
