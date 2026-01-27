@@ -45,6 +45,9 @@ public class ValidatorGenPanel implements ValidatorGenView {
     private final JButton addRuleButton = new JButton("Add");
     private final JButton removeRuleButton = new JButton("Remove");
     private final JButton generateButton = new JButton("Generate code");
+    private final JButton copyButton = new JButton("Copy");
+    private final JButton saveButton = new JButton("Save to generated-sources");
+
 
     // repo + table
     private final RuleRepository repo = new InMemoryRuleRepository();
@@ -75,7 +78,21 @@ public class ValidatorGenPanel implements ValidatorGenView {
         var removeRule = new RemoveRuleUseCase(repo);
         var generate = new GenerateCodeUseCase(parser, repo, generator);
 
-        presenter = new ValidatorGenPresenter(this, refreshFields, addRule, removeRule, generate);
+// NEW:
+        var clipboard = new com.vkr.validatorgen.infrastructure.AwtClipboardService();
+        var saver = new com.vkr.validatorgen.infrastructure.DefaultGeneratedCodeSaver(project);
+        var copyUc = new CopyGeneratedCodeUseCase(clipboard);
+        var saveUc = new SaveGeneratedCodeUseCase(parser, saver);
+
+        presenter = new ValidatorGenPresenter(
+                this,
+                refreshFields,
+                addRule,
+                removeRule,
+                generate,
+                copyUc,
+                saveUc
+        );
 
         buildUi();
 
@@ -84,6 +101,9 @@ public class ValidatorGenPanel implements ValidatorGenView {
         addRuleButton.addActionListener(e -> presenter.onAddRule());
         removeRuleButton.addActionListener(e -> presenter.onRemoveRule());
         generateButton.addActionListener(e -> presenter.onGenerateCode());
+        copyButton.addActionListener(e -> presenter.onCopyGenerated());
+        saveButton.addActionListener(e -> presenter.onSaveGenerated());
+
 
         // initial
         presenter.onRefreshFields();
@@ -106,6 +126,9 @@ public class ValidatorGenPanel implements ValidatorGenView {
         controls.add(addRuleButton);
         controls.add(removeRuleButton);
         controls.add(generateButton);
+        controls.add(copyButton);
+        controls.add(saveButton);
+
 
         rulesTable.setFillsViewportHeight(true);
         rulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -188,6 +211,12 @@ public class ValidatorGenPanel implements ValidatorGenView {
     public void refreshRulesTable() {
         rulesTableModel.reload();
     }
+
+    @Override
+    public String getGeneratedCode() {
+        return generatedCodeEditor.getText();
+    }
+
 
     // ---------------- defaults ----------------
 

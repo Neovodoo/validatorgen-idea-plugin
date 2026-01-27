@@ -6,6 +6,7 @@ public interface ValidatorGenView {
     String getDtoText();
     RuleDraft getRuleDraft();
     Integer getSelectedRuleIndex();
+    String getGeneratedCode();
 
     void showFields(List<String> fields);
     void showOutput(String text);

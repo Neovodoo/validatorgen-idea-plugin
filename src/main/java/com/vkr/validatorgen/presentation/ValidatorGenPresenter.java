@@ -1,9 +1,6 @@
 package com.vkr.validatorgen.presentation;
 
-import com.vkr.validatorgen.application.AddRuleUseCase;
-import com.vkr.validatorgen.application.GenerateCodeUseCase;
-import com.vkr.validatorgen.application.RefreshFieldsUseCase;
-import com.vkr.validatorgen.application.RemoveRuleUseCase;
+import com.vkr.validatorgen.application.*;
 
 public final class ValidatorGenPresenter {
 
@@ -13,18 +10,26 @@ public final class ValidatorGenPresenter {
     private final RemoveRuleUseCase removeRule;
     private final GenerateCodeUseCase generateCode;
 
+    // NEW:
+    private final CopyGeneratedCodeUseCase copyGenerated;
+    private final SaveGeneratedCodeUseCase saveGenerated;
+
     public ValidatorGenPresenter(
             ValidatorGenView view,
             RefreshFieldsUseCase refreshFields,
             AddRuleUseCase addRule,
             RemoveRuleUseCase removeRule,
-            GenerateCodeUseCase generateCode
+            GenerateCodeUseCase generateCode,
+            CopyGeneratedCodeUseCase copyGenerated,
+            SaveGeneratedCodeUseCase saveGenerated
     ) {
         this.view = view;
         this.refreshFields = refreshFields;
         this.addRule = addRule;
         this.removeRule = removeRule;
         this.generateCode = generateCode;
+        this.copyGenerated = copyGenerated;
+        this.saveGenerated = saveGenerated;
     }
 
     public void onRefreshFields() {
@@ -63,6 +68,26 @@ public final class ValidatorGenPresenter {
             view.showGeneratedCode(s.code());
             view.showOutput("Generated " + s.dtoClassName() + "GeneratedValidator with " + s.rulesCount() + " rule(s).");
         } else if (res instanceof GenerateCodeUseCase.Result.Error e) {
+            view.showOutput(e.message());
+        }
+    }
+
+    // NEW:
+    public void onCopyGenerated() {
+        var res = copyGenerated.execute(view.getGeneratedCode());
+        if (res instanceof CopyGeneratedCodeUseCase.Result.Success s) {
+            view.showOutput(s.message());
+        } else if (res instanceof CopyGeneratedCodeUseCase.Result.Error e) {
+            view.showOutput(e.message());
+        }
+    }
+
+    // NEW:
+    public void onSaveGenerated() {
+        var res = saveGenerated.execute(view.getDtoText(), view.getGeneratedCode());
+        if (res instanceof SaveGeneratedCodeUseCase.Result.Success s) {
+            view.showOutput(s.message());
+        } else if (res instanceof SaveGeneratedCodeUseCase.Result.Error e) {
             view.showOutput(e.message());
         }
     }
