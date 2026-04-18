@@ -64,6 +64,9 @@ public final class PrototypeViewModel {
     }
 
     public void selectDto(DtoDescriptor dtoDescriptor) {
+        if (dtoDescriptor == null || dtoDescriptor.equals(state.selectedDto())) {
+            return;
+        }
         state.selectedDto(dtoDescriptor);
         state.status(PrototypeStatus.READY);
         state.statusMessage("Selected DTO: " + dtoDescriptor.displayName());
@@ -71,6 +74,9 @@ public final class PrototypeViewModel {
     }
 
     public void setMode(GenerationMode mode) {
+        if (mode == null || mode == state.generationMode()) {
+            return;
+        }
         state.generationMode(mode);
         state.statusMessage("Generation mode switched to: " + mode.label());
         emit();

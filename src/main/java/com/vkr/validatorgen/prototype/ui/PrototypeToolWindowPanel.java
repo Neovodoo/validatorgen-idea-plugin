@@ -47,6 +47,7 @@ public final class PrototypeToolWindowPanel {
     private final JButton removeRuleButton = new JButton("Remove rule");
 
     private final JBCheckBox compactDensity = new JBCheckBox("Compact density", false);
+    private boolean syncingFromState = false;
 
     public PrototypeToolWindowPanel(Project project, PrototypeViewModel viewModel) {
         this.viewModel = viewModel;
@@ -166,6 +167,9 @@ public final class PrototypeToolWindowPanel {
 
     private void bindHandlers() {
         modeCombo.addActionListener(e -> {
+            if (syncingFromState) {
+                return;
+            }
             GenerationMode mode = (GenerationMode) modeCombo.getSelectedItem();
             if (mode != null) {
                 viewModel.setMode(mode);
@@ -173,6 +177,9 @@ public final class PrototypeToolWindowPanel {
         });
 
         dtoList.addListSelectionListener(e -> {
+            if (syncingFromState) {
+                return;
+            }
             if (!e.getValueIsAdjusting()) {
                 DtoDescriptor selected = dtoList.getSelectedValue();
                 if (selected != null) {
@@ -205,15 +212,20 @@ public final class PrototypeToolWindowPanel {
     }
 
     private void render(PrototypeState state) {
-        refillDtoCatalog(state);
-        refillTemplates(state);
-        ruleTableModel.setRules(state.activeRules());
+        syncingFromState = true;
+        try {
+            refillDtoCatalog(state);
+            refillTemplates(state);
+            ruleTableModel.setRules(state.activeRules());
 
-        modeCombo.setSelectedItem(state.generationMode());
-        previewEditor.setText(state.preview().content());
-        diagnosticsArea.setText(toDiagnosticsText(state));
+            modeCombo.setSelectedItem(state.generationMode());
+            previewEditor.setText(state.preview().content());
+            diagnosticsArea.setText(toDiagnosticsText(state));
 
-        statusLabel.setText(statusPrefix(state.status()) + " " + state.statusMessage());
+            statusLabel.setText(statusPrefix(state.status()) + " " + state.statusMessage());
+        } finally {
+            syncingFromState = false;
+        }
     }
 
     private void refillDtoCatalog(PrototypeState state) {
@@ -222,7 +234,9 @@ public final class PrototypeToolWindowPanel {
             dtoListModel.addElement(dto);
         }
         if (state.selectedDto() != null) {
-            dtoList.setSelectedValue(state.selectedDto(), true);
+            if (!state.selectedDto().equals(dtoList.getSelectedValue())) {
+                dtoList.setSelectedValue(state.selectedDto(), true);
+            }
         }
     }
 
