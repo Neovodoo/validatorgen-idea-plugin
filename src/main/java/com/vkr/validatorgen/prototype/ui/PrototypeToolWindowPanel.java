@@ -76,8 +76,10 @@ public final class PrototypeToolWindowPanel {
         top.add(compactDensity);
 
         JBSplitter horizontal = new JBSplitter(false, 0.26f);
+        horizontal.setHonorComponentsMinimumSize(true);
         horizontal.setFirstComponent(buildLeftPane());
         horizontal.setSecondComponent(buildCenterRight());
+        horizontal.setMinimumSize(new Dimension(JBUI.scale(700), JBUI.scale(480)));
 
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setBorder(JBUI.Borders.emptyTop(6));
@@ -105,6 +107,7 @@ public final class PrototypeToolWindowPanel {
         templatePanel.add(templateButtons, BorderLayout.SOUTH);
 
         JPanel container = new JPanel(new BorderLayout());
+        container.setMinimumSize(new Dimension(JBUI.scale(250), JBUI.scale(300)));
         container.add(dtoPanel, BorderLayout.NORTH);
         container.add(templatePanel, BorderLayout.CENTER);
 
@@ -113,8 +116,10 @@ public final class PrototypeToolWindowPanel {
 
     private JComponent buildCenterRight() {
         JBSplitter split = new JBSplitter(false, 0.56f);
+        split.setHonorComponentsMinimumSize(true);
         split.setFirstComponent(buildRulesAndDiagnostics());
         split.setSecondComponent(buildPreviewPane());
+        split.setMinimumSize(new Dimension(JBUI.scale(420), JBUI.scale(300)));
         return split;
     }
 
@@ -146,6 +151,7 @@ public final class PrototypeToolWindowPanel {
         diagnosticsSection.add(new JBScrollPane(diagnosticsArea), BorderLayout.CENTER);
 
         JBSplitter split = new JBSplitter(true, 0.7f);
+        split.setHonorComponentsMinimumSize(true);
         split.setFirstComponent(rulesSection);
         split.setSecondComponent(diagnosticsSection);
         return split;
