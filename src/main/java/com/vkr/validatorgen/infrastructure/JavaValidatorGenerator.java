@@ -66,6 +66,8 @@ public final class JavaValidatorGenerator implements CodeGenerator {
         String opCode = switch (r.getOp()) {
             case GT -> "GT";
             case LT -> "LT";
+            case GE -> "GE";
+            case LE -> "LE";
         };
         return opCode + "_" + r.getLeft() + "_" + r.getRight() + "_" + (index + 1);
     }

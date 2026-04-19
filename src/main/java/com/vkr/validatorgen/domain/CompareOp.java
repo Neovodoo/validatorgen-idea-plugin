@@ -5,7 +5,9 @@ import java.util.Optional;
 
 public enum CompareOp {
     GT(">"),
-    LT("<");
+    LT("<"),
+    GE(">="),
+    LE("<=");
 
     private final String symbol;
 
