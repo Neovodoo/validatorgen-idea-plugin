@@ -1,7 +1,11 @@
 package com.vkr.validatorgen.domain;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 public enum CompareOp {
-    GT(">");
+    GT(">"),
+    LT("<");
 
     private final String symbol;
 
@@ -10,6 +14,21 @@ public enum CompareOp {
     }
 
     public String getSymbol() {
+        return symbol;
+    }
+
+    public static Optional<CompareOp> fromInput(String raw) {
+        if (raw == null) return Optional.empty();
+        String value = raw.trim();
+        if (value.isEmpty()) return Optional.empty();
+
+        return Arrays.stream(values())
+                .filter(op -> op.symbol.equals(value) || op.name().equalsIgnoreCase(value))
+                .findFirst();
+    }
+
+    @Override
+    public String toString() {
         return symbol;
     }
 }

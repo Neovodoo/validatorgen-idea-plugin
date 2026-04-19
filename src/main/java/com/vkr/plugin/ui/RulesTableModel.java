@@ -63,7 +63,7 @@ public final class RulesTableModel extends AbstractTableModel {
 
         switch (columnIndex) {
             case 0 -> left = v;
-            case 1 -> op = ">".equals(v.trim()) ? CompareOp.GT : CompareOp.GT; // пока только GT
+            case 1 -> op = CompareOp.fromInput(v).orElse(old.getOp());
             case 2 -> right = v;
             case 3 -> target = v;
             case 4 -> message = v;
