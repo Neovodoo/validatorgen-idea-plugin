@@ -15,8 +15,12 @@ public final class RefreshFieldsUseCase {
     public Result execute(String dtoText) {
         DtoSpec dto = parser.parse(dtoText);
         if (dto == null) return Result.error("Could not parse DTO class from editor text.");
-        List<String> fields = dto.getIntFields();
-        if (fields.isEmpty()) return Result.error("No int fields found in DTO. Ensure fields are declared as 'int'.");
+        List<String> fields = dto.getFieldTypes().entrySet().stream()
+                .filter(e -> "int".equals(e.getValue()) || "String".equals(e.getValue()))
+                .map(java.util.Map.Entry::getKey)
+                .sorted()
+                .toList();
+        if (fields.isEmpty()) return Result.error("No supported fields found in DTO. Supported types: int, String.");
         return Result.success(fields);
     }
 

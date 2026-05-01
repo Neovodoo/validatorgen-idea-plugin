@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum CompareOp {
+    EQ("=="),
     GT(">"),
     LT("<"),
     GE(">="),

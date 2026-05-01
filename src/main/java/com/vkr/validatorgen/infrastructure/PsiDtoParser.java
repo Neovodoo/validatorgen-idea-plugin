@@ -9,10 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.vkr.validatorgen.domain.DtoParser;
 import com.vkr.validatorgen.domain.DtoSpec;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class PsiDtoParser implements DtoParser {
@@ -53,7 +50,11 @@ public final class PsiDtoParser implements DtoParser {
                     .sorted(Comparator.naturalOrder())
                     .collect(Collectors.toList());
 
-            return new DtoSpec(pkg, className, getterNames, intFields);
+            Map<String, String> fieldTypes = new HashMap<>();
+            Arrays.stream(psiClass.getFields())
+                    .forEach(f -> fieldTypes.put(f.getName(), f.getType().getPresentableText()));
+
+            return new DtoSpec(pkg, className, getterNames, intFields, fieldTypes);
         });
     }
 }

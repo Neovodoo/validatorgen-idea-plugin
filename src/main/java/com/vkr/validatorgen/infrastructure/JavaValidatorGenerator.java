@@ -35,6 +35,7 @@ public final class JavaValidatorGenerator implements CodeGenerator {
 
             String leftExpr = accessor(dto, r.getLeft());
             String rightExpr = accessor(dto, r.getRight());
+            String conditionExpr = condition(dto, r, leftExpr, rightExpr);
             String rid = ruleId(i, r);
             String msgEsc = escapeJava(r.getMessage());
             String pathEsc = escapeJava(r.getTarget());
@@ -42,7 +43,7 @@ public final class JavaValidatorGenerator implements CodeGenerator {
             sb.append("\n")
                     .append("    // Rule ").append(rid).append(": ")
                     .append(r.getLeft()).append(" ").append(r.getOp().getSymbol()).append(" ").append(r.getRight()).append("\n")
-                    .append("    if (!(").append(leftExpr).append(" ").append(r.getOp().getSymbol()).append(" ").append(rightExpr).append(")) {\n")
+                    .append("    if (!(").append(conditionExpr).append(")) {\n")
                     .append("      violations.add(new Violation(\"").append(pathEsc).append("\", \"").append(msgEsc).append("\", \"").append(rid).append("\"));\n")
                     .append("    }\n");
         }
@@ -64,6 +65,7 @@ public final class JavaValidatorGenerator implements CodeGenerator {
 
     private String ruleId(int index, CompareRule r) {
         String opCode = switch (r.getOp()) {
+            case EQ -> "EQ";
             case GT -> "GT";
             case LT -> "LT";
             case GE -> "GE";
@@ -71,6 +73,19 @@ public final class JavaValidatorGenerator implements CodeGenerator {
             case NE -> "NE";
         };
         return opCode + "_" + r.getLeft() + "_" + r.getRight() + "_" + (index + 1);
+    }
+
+
+    private String condition(DtoSpec dto, CompareRule rule, String leftExpr, String rightExpr) {
+        String leftType = dto.getFieldTypes().getOrDefault(rule.getLeft(), "");
+        if ("String".equals(leftType)) {
+            return switch (rule.getOp()) {
+                case EQ -> "java.util.Objects.equals(" + leftExpr + ", " + rightExpr + ")";
+                case NE -> "!java.util.Objects.equals(" + leftExpr + ", " + rightExpr + ")";
+                case GT, LT, GE, LE -> leftExpr + " != null && " + rightExpr + " != null && " + leftExpr + ".compareTo(" + rightExpr + ") " + rule.getOp().getSymbol() + " 0";
+            };
+        }
+        return leftExpr + " " + rule.getOp().getSymbol() + " " + rightExpr;
     }
 
     private String capitalize(String s) {
