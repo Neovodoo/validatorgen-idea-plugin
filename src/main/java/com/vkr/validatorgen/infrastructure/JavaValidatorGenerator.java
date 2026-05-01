@@ -68,6 +68,7 @@ public final class JavaValidatorGenerator implements CodeGenerator {
             case LT -> "LT";
             case GE -> "GE";
             case LE -> "LE";
+            case NE -> "NE";
         };
         return opCode + "_" + r.getLeft() + "_" + r.getRight() + "_" + (index + 1);
     }

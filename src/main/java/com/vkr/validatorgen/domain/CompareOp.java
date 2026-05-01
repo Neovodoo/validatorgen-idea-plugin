@@ -7,7 +7,8 @@ public enum CompareOp {
     GT(">"),
     LT("<"),
     GE(">="),
-    LE("<=");
+    LE("<="),
+    NE("!=");
 
     private final String symbol;
 
