@@ -36,6 +36,7 @@ public final class ValidatorGenPresenter {
         var res = refreshFields.execute(view.getDtoText());
         if (res instanceof RefreshFieldsUseCase.Result.Success s) {
             view.showFields(s.fields());
+            view.showFieldsByType(s.fieldsByType());
             view.showOutput("Found supported fields (int/String): " + String.join(", ", s.fields()));
         } else if (res instanceof RefreshFieldsUseCase.Result.Error e) {
             view.showOutput(e.message());

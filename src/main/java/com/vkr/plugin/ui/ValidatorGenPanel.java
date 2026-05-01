@@ -20,6 +20,7 @@ import com.vkr.validatorgen.presentation.*;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
 
 public class ValidatorGenPanel implements ValidatorGenView {
 
@@ -36,7 +37,7 @@ public class ValidatorGenPanel implements ValidatorGenView {
     private final JBTextArea outputArea = new JBTextArea();
 
     private List<String> availableFields = List.of();
-
+    private Map<String, List<String>> availableFieldsByType = Map.of();
 
     private final JButton refreshFieldsButton = new JButton("Refresh fields");
     private final JButton addRuleButton = new JButton("Add");
@@ -103,7 +104,8 @@ public class ValidatorGenPanel implements ValidatorGenView {
                 return;
             }
 
-            RuleConfigDialog dlg = new RuleConfigDialog(project, availableFields);
+            RuleConfigDialog dlg = new RuleConfigDialog(project, availableFieldsByType);
+
             if (dlg.showAndGet()) { // true если OK
                 RuleDraft draft = dlg.getResultDraft();
                 if (draft != null) {
@@ -175,6 +177,11 @@ public class ValidatorGenPanel implements ValidatorGenView {
     @Override
     public void showFields(List<String> fields) {
         this.availableFields = fields;
+    }
+
+    @Override
+    public void showFieldsByType(Map<String, List<String>> fieldsByType) {
+        this.availableFieldsByType = fieldsByType;
     }
 
     @Override
