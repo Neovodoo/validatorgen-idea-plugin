@@ -1,15 +1,13 @@
 package com.vkr.validatorgen.infrastructure;
 
-import com.vkr.validatorgen.domain.CodeGenerator;
-import com.vkr.validatorgen.domain.CompareRule;
-import com.vkr.validatorgen.domain.DtoSpec;
+import com.vkr.validatorgen.domain.*;
 
 import java.util.List;
 
 public final class JavaValidatorGenerator implements CodeGenerator {
 
     @Override
-    public String generate(DtoSpec dto, List<CompareRule> rules) {
+    public String generate(DtoSpec dto, List<RuleSpec> rules) {
         String outPackage = dto.getPackageName().isBlank()
                 ? "generated"
                 : dto.getPackageName() + ".generated";
@@ -31,14 +29,16 @@ public final class JavaValidatorGenerator implements CodeGenerator {
                 .append("    List<Violation> violations = new ArrayList<>();\n");
 
         for (int i = 0; i < rules.size(); i++) {
-            CompareRule r = rules.get(i);
+            if (!(rules.get(i) instanceof CompareFieldsRule r)) {
+                throw new IllegalArgumentException("Unsupported rule kind for Java generation: " + rules.get(i).getKind());
+            }
 
             String leftExpr = accessor(dto, r.getLeft());
             String rightExpr = accessor(dto, r.getRight());
             String conditionExpr = condition(dto, r, leftExpr, rightExpr);
             String rid = ruleId(i, r);
             String msgEsc = escapeJava(r.getMessage());
-            String pathEsc = escapeJava(r.getTarget());
+            String pathEsc = escapeJava(r.getViolationTarget());
 
             sb.append("\n")
                     .append("    // Rule ").append(rid).append(": ")
@@ -63,7 +63,7 @@ public final class JavaValidatorGenerator implements CodeGenerator {
         return "dto." + fieldName;
     }
 
-    private String ruleId(int index, CompareRule r) {
+    private String ruleId(int index, CompareFieldsRule r) {
         String opCode = switch (r.getOp()) {
             case EQ -> "EQ";
             case GT -> "GT";
@@ -76,7 +76,7 @@ public final class JavaValidatorGenerator implements CodeGenerator {
     }
 
 
-    private String condition(DtoSpec dto, CompareRule rule, String leftExpr, String rightExpr) {
+    private String condition(DtoSpec dto, CompareFieldsRule rule, String leftExpr, String rightExpr) {
         String leftType = dto.getFieldTypes().getOrDefault(rule.getLeft(), "");
         if ("String".equals(leftType)) {
             return switch (rule.getOp()) {

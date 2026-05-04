@@ -1,8 +1,6 @@
 package com.vkr.plugin.ui;
 
-import com.vkr.validatorgen.domain.CompareOp;
-import com.vkr.validatorgen.domain.CompareRule;
-import com.vkr.validatorgen.domain.RuleRepository;
+import com.vkr.validatorgen.domain.*;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.List;
@@ -33,18 +31,18 @@ public final class RulesTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return true; // как у тебя: редактируем прямо в таблице
+        return true;
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        List<CompareRule> rules = repo.all();
-        CompareRule r = rules.get(rowIndex);
+        List<RuleSpec> rules = repo.all();
+        CompareFieldsRule r = (CompareFieldsRule) rules.get(rowIndex);
         return switch (columnIndex) {
             case 0 -> r.getLeft();
             case 1 -> r.getOp().getSymbol();
             case 2 -> r.getRight();
-            case 3 -> r.getTarget();
+            case 3 -> r.getViolationTarget();
             case 4 -> r.getMessage();
             default -> "";
         };
@@ -53,12 +51,12 @@ public final class RulesTableModel extends AbstractTableModel {
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         String v = aValue == null ? "" : aValue.toString();
-        CompareRule old = repo.all().get(rowIndex);
+        CompareFieldsRule old = (CompareFieldsRule) repo.all().get(rowIndex);
 
         String left = old.getLeft();
         CompareOp op = old.getOp();
         String right = old.getRight();
-        String target = old.getTarget();
+        String target = old.getViolationTarget();
         String message = old.getMessage();
 
         switch (columnIndex) {
@@ -69,7 +67,7 @@ public final class RulesTableModel extends AbstractTableModel {
             case 4 -> message = v;
         }
 
-        repo.updateAt(rowIndex, new CompareRule(left, op, right, target, message));
+        repo.updateAt(rowIndex, new CompareFieldsRule(old.getId(), left, op, right, target, message));
         fireTableCellUpdated(rowIndex, columnIndex);
     }
 

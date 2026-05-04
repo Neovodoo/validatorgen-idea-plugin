@@ -1,8 +1,6 @@
 package com.vkr.validatorgen.infrastructure;
 
-import com.vkr.validatorgen.domain.CompareOp;
-import com.vkr.validatorgen.domain.CompareRule;
-import com.vkr.validatorgen.domain.DtoSpec;
+import com.vkr.validatorgen.domain.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,8 +20,7 @@ class JavaValidatorGeneratorTest {
                 List.of("amount", "limit"),
                 Map.of("amount", "int", "limit", "int")
         );
-        var rules = List.of(new CompareRule("amount", CompareOp.GT, "limit", "amount", "Amount should be greater"));
-
+        List<RuleSpec> rules = List.of(new CompareFieldsRule("rule-1", "amount", CompareOp.GT, "limit", "amount", "Amount should be greater"));
         String code = new JavaValidatorGenerator().generate(dto, rules);
 
         assertTrue(code.contains("if (!(dto.getAmount() > dto.getLimit()))"));
@@ -39,7 +36,7 @@ class JavaValidatorGeneratorTest {
                 List.of(),
                 Map.of("comment", "String", "expectedComment", "String")
         );
-        var rules = List.of(new CompareRule("comment", CompareOp.EQ, "expectedComment", "comment", "Comments must match"));
+        List<RuleSpec> rules = List.of(new CompareFieldsRule("rule-2", "comment", CompareOp.EQ, "expectedComment", "comment", "Comments must match"));
 
         String code = new JavaValidatorGenerator().generate(dto, rules);
 

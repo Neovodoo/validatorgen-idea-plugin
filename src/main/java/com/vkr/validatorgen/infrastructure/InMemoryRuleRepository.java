@@ -2,20 +2,21 @@ package com.vkr.validatorgen.infrastructure;
 
 import com.vkr.validatorgen.domain.CompareRule;
 import com.vkr.validatorgen.domain.RuleRepository;
+import com.vkr.validatorgen.domain.RuleSpec;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class InMemoryRuleRepository implements RuleRepository {
-    private final List<CompareRule> rules = new ArrayList<>();
+    private final List<RuleSpec> rules = new ArrayList<>();
 
     @Override
-    public List<CompareRule> all() {
+    public List<RuleSpec> all() {
         return List.copyOf(rules);
     }
 
     @Override
-    public void add(CompareRule rule) {
+    public void add(RuleSpec rule) {
         rules.add(rule);
     }
 
@@ -25,7 +26,7 @@ public final class InMemoryRuleRepository implements RuleRepository {
     }
 
     @Override
-    public void updateAt(int index, CompareRule rule) {
+    public void updateAt(int index, RuleSpec rule) {
         if (index >= 0 && index < rules.size()) rules.set(index, rule);
     }
 

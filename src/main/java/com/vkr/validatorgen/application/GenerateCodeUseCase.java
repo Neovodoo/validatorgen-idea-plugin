@@ -1,9 +1,6 @@
 package com.vkr.validatorgen.application;
 
-import com.vkr.validatorgen.domain.CodeGenerator;
-import com.vkr.validatorgen.domain.DtoParser;
-import com.vkr.validatorgen.domain.DtoSpec;
-import com.vkr.validatorgen.domain.RuleRepository;
+import com.vkr.validatorgen.domain.*;
 
 public final class GenerateCodeUseCase {
     private final DtoParser parser;
@@ -23,7 +20,10 @@ public final class GenerateCodeUseCase {
         DtoSpec dto = parser.parse(dtoText);
         if (dto == null) return Result.error("Could not parse DTO class from editor text.");
 
-        for (var rule : rules) {
+        for (var ruleSpec : rules) {
+            if (!(ruleSpec instanceof CompareFieldsRule rule)) {
+                return Result.error("Unsupported rule kind: " + ruleSpec.getKind());
+            }
             String leftType = dto.getFieldTypes().get(rule.getLeft());
             String rightType = dto.getFieldTypes().get(rule.getRight());
             if (leftType == null || rightType == null) {

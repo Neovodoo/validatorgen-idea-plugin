@@ -15,7 +15,7 @@ public class GenerateCodeUseCaseTest {
     @Test
     void returnsErrorWhenRuleFieldIsMissingInDto() {
         RuleRepository repo = new InMemoryRuleRepository();
-        repo.add(new CompareRule("amount", CompareOp.GT, "missingField", "amount", "bad"));
+        repo.add(new CompareFieldsRule("rule-1", "amount", CompareOp.GT, "missingField", "amount", "bad"));
 
         DtoParser parser = ignored -> dtoWithTypes(Map.of("amount", "int", "limit", "int"));
         var useCase = new GenerateCodeUseCase(parser, repo, new JavaValidatorGenerator());
@@ -30,7 +30,7 @@ public class GenerateCodeUseCaseTest {
     @Test
     void returnsErrorWhenRuleFieldTypesMismatch() {
         RuleRepository repo = new InMemoryRuleRepository();
-        repo.add(new CompareRule("amount", CompareOp.GT, "comment", "amount", "bad"));
+        repo.add(new CompareFieldsRule("rule-2", "amount", CompareOp.GT, "comment", "amount", "bad"));
 
         DtoParser parser = ignored -> dtoWithTypes(Map.of("amount", "int", "comment", "String"));
         var useCase = new GenerateCodeUseCase(parser, repo, new JavaValidatorGenerator());

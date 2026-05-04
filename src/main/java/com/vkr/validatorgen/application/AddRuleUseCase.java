@@ -1,5 +1,6 @@
 package com.vkr.validatorgen.application;
 
+import com.vkr.validatorgen.domain.CompareFieldsRule;
 import com.vkr.validatorgen.domain.CompareRule;
 import com.vkr.validatorgen.domain.RuleRepository;
 import com.vkr.validatorgen.presentation.RuleDraft;
@@ -28,7 +29,7 @@ public final class AddRuleUseCase {
             return Result.error("Message must not be empty.");
         }
 
-        repo.add(new CompareRule(left, op, right, target, message));
+        repo.add(new CompareFieldsRule(java.util.UUID.randomUUID().toString(), left, op, right, target, message));
         return Result.success("Added condition: " + left + " " + op.getSymbol() + " " + right + " (target=" + target + ")");
     }
 

@@ -1,5 +1,6 @@
 package com.vkr.validatorgen.application;
 
+import com.vkr.validatorgen.domain.CompareFieldsRule;
 import com.vkr.validatorgen.domain.CompareOp;
 import com.vkr.validatorgen.infrastructure.InMemoryRuleRepository;
 import com.vkr.validatorgen.presentation.RuleDraft;
@@ -19,11 +20,11 @@ public class AddRuleUseCaseTest {
 
         assertInstanceOf(AddRuleUseCase.Result.Success.class, result);
         assertEquals(1, repo.all().size());
-        var rule = repo.all().get(0);
+        var rule = (CompareFieldsRule) repo.all().get(0);
         assertEquals("amount", rule.getLeft());
         assertEquals(CompareOp.GT, rule.getOp());
         assertEquals("limit", rule.getRight());
-        assertEquals("amount", rule.getTarget());
+        assertEquals("amount", rule.getViolationTarget());
         assertEquals("Amount must be greater", rule.getMessage());
     }
 }
