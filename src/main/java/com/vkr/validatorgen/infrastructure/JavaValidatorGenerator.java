@@ -58,6 +58,8 @@ public final class JavaValidatorGenerator implements CodeGenerator {
     }
 
     private String accessor(DtoSpec dto, String fieldName) {
+        FieldMeta field = dto.getField(fieldName);
+        if (field != null) return field.accessorExpression("dto");
         String getter = "get" + capitalize(fieldName);
         if (dto.getGetterNames().contains(getter)) return "dto." + getter + "()";
         return "dto." + fieldName;
@@ -77,8 +79,8 @@ public final class JavaValidatorGenerator implements CodeGenerator {
 
 
     private String condition(DtoSpec dto, CompareFieldsRule rule, String leftExpr, String rightExpr) {
-        String leftType = dto.getFieldTypes().getOrDefault(rule.getLeft(), "");
-        if ("String".equals(leftType)) {
+        FieldMeta left = dto.getField(rule.getLeft());
+        if (left != null && left.isStringLike()) {
             return switch (rule.getOp()) {
                 case EQ -> "java.util.Objects.equals(" + leftExpr + ", " + rightExpr + ")";
                 case NE -> "!java.util.Objects.equals(" + leftExpr + ", " + rightExpr + ")";

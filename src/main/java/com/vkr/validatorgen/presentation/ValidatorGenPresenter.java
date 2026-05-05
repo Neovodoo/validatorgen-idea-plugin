@@ -37,7 +37,7 @@ public final class ValidatorGenPresenter {
         if (res instanceof RefreshFieldsUseCase.Result.Success s) {
             view.showFields(s.fields());
             view.showFieldsByType(s.fieldsByType());
-            view.showOutput("Found supported fields (int/String): " + String.join(", ", s.fields()));
+            view.showOutput("Found DTO fields (UI currently groups by Java type text): " + String.join(", ", s.fields()));
         } else if (res instanceof RefreshFieldsUseCase.Result.Error e) {
             view.showOutput(e.message());
         }

@@ -18,7 +18,6 @@ public final class RefreshFieldsUseCase {
         DtoSpec dto = parser.parse(dtoText);
         if (dto == null) return Result.error("Could not parse DTO class from editor text.");
         Map<String, List<String>> fieldsByType = dto.getFieldTypes().entrySet().stream()
-                .filter(e -> "int".equals(e.getValue()) || "String".equals(e.getValue()))
                 .collect(java.util.stream.Collectors.groupingBy(
                         Map.Entry::getValue,
                         LinkedHashMap::new,
@@ -27,7 +26,7 @@ public final class RefreshFieldsUseCase {
         fieldsByType.replaceAll((k, v) -> v.stream().sorted().toList());
 
         List<String> fields = fieldsByType.values().stream().flatMap(List::stream).sorted().toList();
-        if (fields.isEmpty()) return Result.error("No supported fields found in DTO. Supported types: int, String.");
+        if (fields.isEmpty()) return Result.error("No fields found in DTO.");
         return Result.success(fields, fieldsByType);
     }
 

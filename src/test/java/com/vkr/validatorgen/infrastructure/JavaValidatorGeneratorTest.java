@@ -17,8 +17,10 @@ class JavaValidatorGeneratorTest {
                 "com.example",
                 "OrderDto",
                 Set.of("getAmount", "getLimit"),
-                List.of("amount", "limit"),
-                Map.of("amount", "int", "limit", "int")
+                List.of(
+                        new FieldMeta("amount", TypeRef.of("int", "int"), true, false, false, true, false, false, "getAmount"),
+                        new FieldMeta("limit", TypeRef.of("int", "int"), true, false, false, true, false, false, "getLimit")
+                )
         );
         List<RuleSpec> rules = List.of(new CompareFieldsRule("rule-1", "amount", CompareOp.GT, "limit", "amount", "Amount should be greater"));
         String code = new JavaValidatorGenerator().generate(dto, rules);
@@ -33,8 +35,10 @@ class JavaValidatorGeneratorTest {
                 "com.example",
                 "OrderDto",
                 Set.of("getComment", "getExpectedComment"),
-                List.of(),
-                Map.of("comment", "String", "expectedComment", "String")
+                List.of(
+                        new FieldMeta("comment", TypeRef.of("java.lang.String", "String"), false, true, false, false, false, false, "getComment"),
+                        new FieldMeta("expectedComment", TypeRef.of("java.lang.String", "String"), false, true, false, false, false, false, "getExpectedComment")
+                )
         );
         List<RuleSpec> rules = List.of(new CompareFieldsRule("rule-2", "comment", CompareOp.EQ, "expectedComment", "comment", "Comments must match"));
 

@@ -43,6 +43,9 @@ public class GenerateCodeUseCaseTest {
     }
 
     private static DtoSpec dtoWithTypes(Map<String, String> fieldTypes) {
-        return new DtoSpec("com.example", "OrderDto", Set.of("getAmount", "getLimit", "getComment"), List.of(), fieldTypes);
+        List<FieldMeta> fields = fieldTypes.entrySet().stream()
+                .map(e -> new FieldMeta(e.getKey(), TypeRef.of(e.getValue(), e.getValue()), false, "String".equals(e.getValue()), false, "int".equals(e.getValue()), false, false, "get" + Character.toUpperCase(e.getKey().charAt(0)) + e.getKey().substring(1)))
+                .toList();
+        return new DtoSpec("com.example", "OrderDto", Set.of("getAmount", "getLimit", "getComment"), fields);
     }
 }
