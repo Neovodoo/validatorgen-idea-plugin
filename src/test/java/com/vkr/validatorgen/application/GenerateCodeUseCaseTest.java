@@ -24,7 +24,7 @@ public class GenerateCodeUseCaseTest {
 
         assertInstanceOf(GenerateCodeUseCase.Result.Error.class, result);
         var error = (GenerateCodeUseCase.Result.Error) result;
-        assertTrue(error.message().contains("Unknown field in rule"));
+        assertTrue(error.message().contains("Unknown right field in rule"));
     }
 
     @Test

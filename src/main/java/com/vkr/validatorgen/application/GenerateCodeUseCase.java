@@ -1,16 +1,24 @@
 package com.vkr.validatorgen.application;
 
 import com.vkr.validatorgen.domain.*;
+import com.vkr.validatorgen.domain.validation.RuleValidatorRegistry;
+import com.vkr.validatorgen.domain.validation.ValidationDiagnostic;
 
 public final class GenerateCodeUseCase {
     private final DtoParser parser;
     private final RuleRepository repo;
     private final CodeGenerator generator;
+    private final RuleValidatorRegistry validatorRegistry;
 
-    public GenerateCodeUseCase(DtoParser parser, RuleRepository repo, CodeGenerator generator) {
+    public GenerateCodeUseCase(DtoParser parser, RuleRepository repo, CodeGenerator generator, RuleValidatorRegistry validatorRegistry)  {
         this.parser = parser;
         this.repo = repo;
         this.generator = generator;
+        this.validatorRegistry = validatorRegistry;
+    }
+
+    public GenerateCodeUseCase(DtoParser parser, RuleRepository repo, CodeGenerator generator) {
+        this(parser, repo, generator, RuleValidatorRegistry.defaults());
     }
 
     public Result execute(String dtoText) {
@@ -20,22 +28,19 @@ public final class GenerateCodeUseCase {
         DtoSpec dto = parser.parse(dtoText);
         if (dto == null) return Result.error("Could not parse DTO class from editor text.");
 
-        for (var ruleSpec : rules) {
-            if (!(ruleSpec instanceof CompareFieldsRule rule)) {
-                return Result.error("Unsupported rule kind: " + ruleSpec.getKind());
-            }
-            String leftType = dto.getFieldTypes().get(rule.getLeft());
-            String rightType = dto.getFieldTypes().get(rule.getRight());
-            if (leftType == null || rightType == null) {
-                return Result.error("Unknown field in rule: " + rule.getLeft() + " or " + rule.getRight() + ". Refresh fields and recreate rule.");
-            }
-            if (!leftType.equals(rightType)) {
-                return Result.error("Type mismatch in rule: " + rule.getLeft() + " (" + leftType + ") vs " + rule.getRight() + " (" + rightType + ").");
+        for (var rule : rules) {
+            var diagnostics = validatorRegistry.validate(rule, dto);
+            if (!diagnostics.isEmpty()) {
+                return Result.error(format(diagnostics.get(0)));
             }
         }
 
         String code = generator.generate(dto, rules);
         return Result.success(code, dto.getClassName(), rules.size());
+    }
+
+    private String format(ValidationDiagnostic diagnostic) {
+        return diagnostic.message();
     }
 
     public sealed interface Result permits Result.Success, Result.Error {

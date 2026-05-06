@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBTextField;
 import com.vkr.validatorgen.application.*;
 import com.vkr.validatorgen.domain.CompareOp;
 import com.vkr.validatorgen.domain.RuleRepository;
+import com.vkr.validatorgen.domain.validation.RuleValidatorRegistry;
 import com.vkr.validatorgen.infrastructure.InMemoryRuleRepository;
 import com.vkr.validatorgen.infrastructure.JavaValidatorGenerator;
 import com.vkr.validatorgen.infrastructure.PsiDtoParser;
@@ -75,9 +76,10 @@ public class ValidatorGenPanel implements ValidatorGenView {
         var generator = new JavaValidatorGenerator();
 
         var refreshFields = new RefreshFieldsUseCase(parser);
-        var addRule = new AddRuleUseCase(repo);
+        var ruleValidators = RuleValidatorRegistry.defaults();
+        var addRule = new AddRuleUseCase(repo, parser, ruleValidators);
         var removeRule = new RemoveRuleUseCase(repo);
-        var generate = new GenerateCodeUseCase(parser, repo, generator);
+        var generate = new GenerateCodeUseCase(parser, repo, generator, ruleValidators);
 
         var clipboard = new com.vkr.validatorgen.infrastructure.AwtClipboardService();
         var saver = new com.vkr.validatorgen.infrastructure.DefaultGeneratedCodeSaver(project);

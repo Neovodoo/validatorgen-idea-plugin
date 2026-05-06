@@ -50,7 +50,7 @@ public final class ValidatorGenPresenter {
     }
 
     public void onAddRule(RuleDraft draft) {
-        var res = addRule.execute(draft);
+        var res = addRule.execute(draft, view.getDtoText());
         if (res instanceof AddRuleUseCase.Result.Success s) {
             view.refreshRulesTable();
             view.showOutput(s.message());
