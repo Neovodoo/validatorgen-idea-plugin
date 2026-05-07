@@ -64,7 +64,8 @@ public final class PsiDtoParser implements DtoParser {
         boolean isPrimitive = psiType instanceof PsiPrimitiveType;
         String normalized = canonical == null || canonical.isBlank() ? presentable : canonical;
 
-        boolean isStringLike = "java.lang.String".equals(normalized) || "String".equals(presentable);
+        boolean isStringLike = "java.lang.String".equals(normalized) || "String".equals(presentable)
+                || "java.lang.CharSequence".equals(normalized) || "CharSequence".equals(presentable);
         boolean isBooleanLike = "boolean".equals(normalized) || "java.lang.Boolean".equals(normalized);
         boolean isNumericLike = isNumericType(normalized);
         boolean isEnumLike = isEnumType(field);
