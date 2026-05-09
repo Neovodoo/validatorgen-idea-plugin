@@ -1,10 +1,24 @@
 package com.vkr.validatorgen.infrastructure;
 
-import com.vkr.validatorgen.domain.*;
+import com.vkr.validatorgen.domain.CodeGenerator;
+import com.vkr.validatorgen.domain.DtoSpec;
+import com.vkr.validatorgen.domain.RuleSpec;
+
 
 import java.util.List;
+import java.util.Objects;
 
 public final class JavaValidatorGenerator implements CodeGenerator {
+
+    private final RuleCodeEmitterRegistry emitterRegistry;
+
+    public JavaValidatorGenerator() {
+        this(RuleCodeEmitterRegistry.defaults());
+    }
+
+    public JavaValidatorGenerator(RuleCodeEmitterRegistry emitterRegistry) {
+        this.emitterRegistry = Objects.requireNonNull(emitterRegistry);
+    }
 
     @Override
     public String generate(DtoSpec dto, List<RuleSpec> rules) {
@@ -28,24 +42,11 @@ public final class JavaValidatorGenerator implements CodeGenerator {
                 .append("  public static List<Violation> validate(").append(dtoClass).append(" dto) {\n")
                 .append("    List<Violation> violations = new ArrayList<>();\n");
 
+        JavaRuleCodeContext context = new JavaRuleCodeContext(dto, "dto");
         for (int i = 0; i < rules.size(); i++) {
-            if (!(rules.get(i) instanceof CompareFieldsRule r)) {
-                throw new IllegalArgumentException("Unsupported rule kind for Java generation: " + rules.get(i).getKind());
-            }
-
-            String leftExpr = accessor(dto, r.getLeft());
-            String rightExpr = accessor(dto, r.getRight());
-            String conditionExpr = condition(dto, r, leftExpr, rightExpr);
-            String rid = ruleId(i, r);
-            String msgEsc = escapeJava(r.getMessage());
-            String pathEsc = escapeJava(r.getViolationTarget());
-
-            sb.append("\n")
-                    .append("    // Rule ").append(rid).append(": ")
-                    .append(r.getLeft()).append(" ").append(r.getOp().getSymbol()).append(" ").append(r.getRight()).append("\n")
-                    .append("    if (!(").append(conditionExpr).append(")) {\n")
-                    .append("      violations.add(new Violation(\"").append(pathEsc).append("\", \"").append(msgEsc).append("\", \"").append(rid).append("\"));\n")
-                    .append("    }\n");
+            RuleSpec rule = rules.get(i);
+            RuleCode ruleCode = emitterRegistry.emit(dto, rule, i, context);
+            appendRuleViolation(sb, rule, ruleCode);
         }
 
         sb.append("\n")
@@ -57,42 +58,13 @@ public final class JavaValidatorGenerator implements CodeGenerator {
         return sb.toString();
     }
 
-    private String accessor(DtoSpec dto, String fieldName) {
-        FieldMeta field = dto.getField(fieldName);
-        if (field != null) return field.accessorExpression("dto");
-        String getter = "get" + capitalize(fieldName);
-        if (dto.getGetterNames().contains(getter)) return "dto." + getter + "()";
-        return "dto." + fieldName;
-    }
-
-    private String ruleId(int index, CompareFieldsRule r) {
-        String opCode = switch (r.getOp()) {
-            case EQ -> "EQ";
-            case GT -> "GT";
-            case LT -> "LT";
-            case GE -> "GE";
-            case LE -> "LE";
-            case NE -> "NE";
-        };
-        return opCode + "_" + r.getLeft() + "_" + r.getRight() + "_" + (index + 1);
-    }
-
-
-    private String condition(DtoSpec dto, CompareFieldsRule rule, String leftExpr, String rightExpr) {
-        FieldMeta left = dto.getField(rule.getLeft());
-        if (left != null && left.isStringLike()) {
-            return switch (rule.getOp()) {
-                case EQ -> "java.util.Objects.equals(" + leftExpr + ", " + rightExpr + ")";
-                case NE -> "!java.util.Objects.equals(" + leftExpr + ", " + rightExpr + ")";
-                case GT, LT, GE, LE -> leftExpr + " != null && " + rightExpr + " != null && " + leftExpr + ".compareTo(" + rightExpr + ") " + rule.getOp().getSymbol() + " 0";
-            };
-        }
-        return leftExpr + " " + rule.getOp().getSymbol() + " " + rightExpr;
-    }
-
-    private String capitalize(String s) {
-        if (s == null || s.isEmpty()) return s;
-        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    private void appendRuleViolation(StringBuilder sb, RuleSpec rule, RuleCode ruleCode) {
+        sb.append("\n")
+                .append("    // Rule ").append(ruleCode.ruleId()).append(": ").append(ruleCode.comment()).append("\n")
+                .append("    if (!(").append(ruleCode.conditionExpression()).append(")) {\n")
+                .append("      violations.add(new Violation(\"").append(escapeJava(rule.getViolationTarget())).append("\", \"")
+                .append(escapeJava(rule.getMessage())).append("\", \"").append(escapeJava(ruleCode.ruleId())).append("\"));\n")
+                .append("    }\n");
     }
 
     private String escapeJava(String s) {
