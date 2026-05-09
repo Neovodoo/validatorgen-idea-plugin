@@ -87,6 +87,112 @@ class CompareFieldsRuleValidatorTest {
         assertTrue(diagnostics.isEmpty());
     }
 
+    @Test
+    void acceptsPrimitiveIntEquality() {
+        var diagnostics = validator.validate(rule("actual", CompareOp.EQ, "expected"), dto(
+                field("actual", "int", true, false, false, true, false, false),
+                field("expected", "int", true, false, false, true, false, false)
+        ));
+
+        assertTrue(diagnostics.isEmpty());
+    }
+
+    @Test
+    void acceptsBoxedNumericOrderingForCurrentlyNumericLikeTypes() {
+        var integerDiagnostics = validator.validate(rule("actual", CompareOp.GT, "expected"), dto(
+                field("actual", "java.lang.Integer", false, false, false, true, false, true),
+                field("expected", "java.lang.Integer", false, false, false, true, false, true)
+        ));
+        var longDiagnostics = validator.validate(rule("actual", CompareOp.LE, "expected"), dto(
+                field("actual", "java.lang.Long", false, false, false, true, false, true),
+                field("expected", "java.lang.Long", false, false, false, true, false, true)
+        ));
+
+        assertTrue(integerDiagnostics.isEmpty(), "Current validator accepts Integer > Integer; generator must make this null-safe.");
+        assertTrue(longDiagnostics.isEmpty(), "Current validator accepts Long <= Long; generator must make this null-safe.");
+    }
+
+    @Test
+    void acceptsPrimitiveAndBoxedBooleanEquality() {
+        var primitiveDiagnostics = validator.validate(rule("actual", CompareOp.EQ, "expected"), dto(
+                field("actual", "boolean", true, false, true, false, false, false),
+                field("expected", "boolean", true, false, true, false, false, false)
+        ));
+        var boxedDiagnostics = validator.validate(rule("actual", CompareOp.EQ, "expected"), dto(
+                field("actual", "java.lang.Boolean", false, false, true, false, false, true),
+                field("expected", "java.lang.Boolean", false, false, true, false, false, true)
+        ));
+
+        assertTrue(primitiveDiagnostics.isEmpty());
+        assertTrue(boxedDiagnostics.isEmpty());
+    }
+
+    @Test
+    void reportsOrderingOperatorForLocalDate() {
+        var diagnostics = validator.validate(rule("actual", CompareOp.LT, "expected"), dto(
+                field("actual", "java.time.LocalDate", false, false, false, false, false, true),
+                field("expected", "java.time.LocalDate", false, false, false, false, false, true)
+        ));
+
+        assertEquals(CompareFieldsRuleValidator.OPERATOR_NOT_ALLOWED, diagnostics.get(0).code(),
+                "Current validator forbids LocalDate < LocalDate; future support should use compareTo instead of Java '<'.");
+    }
+
+    @Test
+    void acceptsLocalDateEqualityAsReferenceEqualityRiskForGeneratorToAvoid() {
+        var diagnostics = validator.validate(rule("actual", CompareOp.EQ, "expected"), dto(
+                field("actual", "java.time.LocalDate", false, false, false, false, false, true),
+                field("expected", "java.time.LocalDate", false, false, false, false, false, true)
+        ));
+
+        assertTrue(diagnostics.isEmpty(), "Equality for LocalDate is currently allowed; generator must not use reference equality.");
+    }
+
+    @Test
+    void acceptsBigDecimalAndBigIntegerOrderingAsCurrentCompilationRisk() {
+        var bigDecimalDiagnostics = validator.validate(rule("actual", CompareOp.GT, "expected"), dto(
+                field("actual", "java.math.BigDecimal", false, false, false, true, false, true),
+                field("expected", "java.math.BigDecimal", false, false, false, true, false, true)
+        ));
+        var bigIntegerDiagnostics = validator.validate(rule("actual", CompareOp.GT, "expected"), dto(
+                field("actual", "java.math.BigInteger", false, false, false, true, false, true),
+                field("expected", "java.math.BigInteger", false, false, false, true, false, true)
+        ));
+
+        assertTrue(bigDecimalDiagnostics.isEmpty(), "TODO: either forbid BigDecimal ordering or emit compareTo-based code.");
+        assertTrue(bigIntegerDiagnostics.isEmpty(), "TODO: either forbid BigInteger ordering or emit compareTo-based code.");
+    }
+
+    @Test
+    void acceptsEnumEqualityAndRejectsEnumOrdering() {
+        var equalityDiagnostics = validator.validate(rule("actual", CompareOp.EQ, "expected"), dto(
+                field("actual", "com.example.Status", false, false, false, false, true, true),
+                field("expected", "com.example.Status", false, false, false, false, true, true)
+        ));
+        var orderingDiagnostics = validator.validate(rule("actual", CompareOp.GT, "expected"), dto(
+                field("actual", "com.example.Status", false, false, false, false, true, true),
+                field("expected", "com.example.Status", false, false, false, false, true, true)
+        ));
+
+        assertTrue(equalityDiagnostics.isEmpty());
+        assertEquals(CompareFieldsRuleValidator.OPERATOR_NOT_ALLOWED, orderingDiagnostics.get(0).code());
+    }
+
+    @Test
+    void acceptsReferenceEqualityAndRejectsReferenceOrdering() {
+        var equalityDiagnostics = validator.validate(rule("actual", CompareOp.EQ, "expected"), dto(
+                field("actual", "com.example.Money", false, false, false, false, false, true),
+                field("expected", "com.example.Money", false, false, false, false, false, true)
+        ));
+        var orderingDiagnostics = validator.validate(rule("actual", CompareOp.GT, "expected"), dto(
+                field("actual", "com.example.Money", false, false, false, false, false, true),
+                field("expected", "com.example.Money", false, false, false, false, false, true)
+        ));
+
+        assertTrue(equalityDiagnostics.isEmpty(), "Equality for arbitrary references is allowed; generator must avoid accidental reference equality.");
+        assertEquals(CompareFieldsRuleValidator.OPERATOR_NOT_ALLOWED, orderingDiagnostics.get(0).code());
+    }
+
     private static CompareFieldsRule rule(String left, CompareOp op, String right) {
         return new CompareFieldsRule("rule-1", left, op, right, left, "message");
     }

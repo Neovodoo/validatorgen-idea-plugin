@@ -1,6 +1,7 @@
 package com.vkr.validatorgen.infrastructure;
 
 import com.vkr.validatorgen.domain.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JavaValidatorGeneratorTest {
@@ -91,6 +93,149 @@ class JavaValidatorGeneratorTest {
         assertTrue(code.contains("if (!(EMITTER_GENERATED_CONDITION))"));
         assertTrue(code.contains("new Violation(\"amount\", \"Amount should be greater\", \"emitter-rule-id\")"));
     }
+
+    @Test
+    void generatesPrimitiveIntEqualityUsingInfixOperator() {
+        String code = generateCompare(
+                CompareOp.EQ,
+                field("actual", "int", true, false, false, true, false, false),
+                field("expected", "int", true, false, false, true, false, false)
+        );
+
+        assertTrue(code.contains("if (!(dto.getActual() == dto.getExpected()))"));
+    }
+
+    @Disabled("TODO: generator currently emits reference equality for boxed Integer; switch to Objects.equals.")
+    @Test
+    void boxedIntegerEqualityDoesNotUseReferenceEquality() {
+        String code = generateCompare(
+                CompareOp.EQ,
+                field("actual", "java.lang.Integer", false, false, false, true, false, true),
+                field("expected", "java.lang.Integer", false, false, false, true, false, true)
+        );
+
+        assertFalse(code.contains("dto.getActual() == dto.getExpected()"),
+                "Integer == Integer must not be emitted as reference equality; use Objects.equals instead.");
+        assertTrue(code.contains("java.util.Objects.equals(dto.getActual(), dto.getExpected())"));
+    }
+
+    @Disabled("TODO: generator currently emits null-unsafe unboxing for boxed Integer ordering.")
+    @Test
+    void boxedIntegerOrderingIsNullSafe() {
+        String code = generateCompare(
+                CompareOp.GT,
+                field("actual", "java.lang.Integer", false, false, false, true, false, true),
+                field("expected", "java.lang.Integer", false, false, false, true, false, true)
+        );
+
+        assertTrue(code.contains("dto.getActual() != null") && code.contains("dto.getExpected() != null"),
+                "Integer > Integer is currently emitted with unboxing and can throw NullPointerException.");
+        assertTrue(code.contains("dto.getActual() > dto.getExpected()") || code.contains("dto.getActual().compareTo(dto.getExpected()) > 0"));
+    }
+
+    @Disabled("TODO: generator currently emits null-unsafe unboxing for boxed Long ordering.")
+    @Test
+    void boxedLongLessOrEqualOrderingIsNullSafe() {
+        String code = generateCompare(
+                CompareOp.LE,
+                field("actual", "java.lang.Long", false, false, false, true, false, true),
+                field("expected", "java.lang.Long", false, false, false, true, false, true)
+        );
+
+        assertTrue(code.contains("dto.getActual() != null") && code.contains("dto.getExpected() != null"),
+                "Long <= Long is currently emitted with unboxing and can throw NullPointerException.");
+        assertTrue(code.contains("dto.getActual() <= dto.getExpected()") || code.contains("dto.getActual().compareTo(dto.getExpected()) <= 0"));
+    }
+
+    @Test
+    void generatesPrimitiveBooleanEqualityUsingInfixOperator() {
+        String code = generateCompare(
+                CompareOp.EQ,
+                field("actual", "boolean", true, false, true, false, false, false),
+                field("expected", "boolean", true, false, true, false, false, false)
+        );
+
+        assertTrue(code.contains("if (!(dto.getActual() == dto.getExpected()))"));
+    }
+
+    @Disabled("TODO: generator currently emits reference equality for boxed Boolean; switch to Objects.equals.")
+    @Test
+    void boxedBooleanEqualityDoesNotUseReferenceEquality() {
+        String code = generateCompare(
+                CompareOp.EQ,
+                field("actual", "java.lang.Boolean", false, false, true, false, false, true),
+                field("expected", "java.lang.Boolean", false, false, true, false, false, true)
+        );
+
+        assertFalse(code.contains("dto.getActual() == dto.getExpected()"),
+                "Boolean == Boolean must not be emitted as reference equality; use Objects.equals instead.");
+        assertTrue(code.contains("java.util.Objects.equals(dto.getActual(), dto.getExpected())"));
+    }
+
+    @Disabled("TODO: generator currently emits reference equality for LocalDate; switch to Objects.equals.")
+    @Test
+    void localDateEqualityDoesNotUseReferenceEquality() {
+        String code = generateCompare(
+                CompareOp.EQ,
+                field("actual", "java.time.LocalDate", false, false, false, false, false, true),
+                field("expected", "java.time.LocalDate", false, false, false, false, false, true)
+        );
+
+        assertFalse(code.contains("dto.getActual() == dto.getExpected()"),
+                "LocalDate == LocalDate must not be emitted as reference equality; use Objects.equals instead.");
+        assertTrue(code.contains("java.util.Objects.equals(dto.getActual(), dto.getExpected())"));
+    }
+
+    @Test
+    void enumEqualityMayUseInfixOperator() {
+        String code = generateCompare(
+                CompareOp.EQ,
+                field("actual", "com.example.Status", false, false, false, false, true, true),
+                field("expected", "com.example.Status", false, false, false, false, true, true)
+        );
+
+        assertTrue(code.contains("if (!(dto.getActual() == dto.getExpected()))"));
+    }
+
+    @Disabled("TODO: generator currently emits identity equality for arbitrary references; decide value-equality semantics.")
+    @Test
+    void arbitraryReferenceEqualityDoesNotAccidentallyUseReferenceEquality() {
+        String code = generateCompare(
+                CompareOp.EQ,
+                field("actual", "com.example.Money", false, false, false, false, false, true),
+                field("expected", "com.example.Money", false, false, false, false, false, true)
+        );
+
+        assertFalse(code.contains("dto.getActual() == dto.getExpected()"),
+                "Arbitrary reference equality should not accidentally mean identity equality when business semantics expect value equality.");
+        assertTrue(code.contains("java.util.Objects.equals(dto.getActual(), dto.getExpected())"));
+    }
+
+    @Disabled("TODO: generator currently emits Java > for BigDecimal, which does not compile; use compareTo or validator rejection.")
+    @Test
+    void generatedBigDecimalOrderingCompiles() throws Exception {
+        assertCompareFieldsCodeCompiles(
+                CompareOp.GT,
+                "java.math.BigDecimal",
+                "BigDecimal",
+                "private final BigDecimal actual = BigDecimal.ONE;\n    private final BigDecimal expected = BigDecimal.ZERO;",
+                "import java.math.BigDecimal;"
+        );
+    }
+
+    @Disabled("TODO: generator currently emits Java > for BigInteger, which does not compile; use compareTo or validator rejection.")
+    @Test
+    void generatedBigIntegerOrderingCompiles() throws Exception {
+        assertCompareFieldsCodeCompiles(
+                CompareOp.GT,
+                "java.math.BigInteger",
+                "BigInteger",
+                "private final BigInteger actual = BigInteger.ONE;\n    private final BigInteger expected = BigInteger.ZERO;",
+                "import java.math.BigInteger;"
+        );
+    }
+
+
     @TempDir
     Path tempDir;
 
@@ -144,6 +289,58 @@ class JavaValidatorGeneratorTest {
         assertTrue(code.contains("java.util.Objects.equals(dto.getPaymentMethod(), \"CARD\")"));
         assertTrue(code.contains("dto.getCardNumber() != null && !dto.getCardNumber().isBlank()"));
         assertTrue(code.contains("if (!(!(java.util.Objects.equals(dto.getPaymentMethod(), \"CARD\")) || (dto.getCardNumber() != null && !dto.getCardNumber().isBlank())))"));
+    }
+
+    private String generateCompare(CompareOp op, FieldMeta left, FieldMeta right) {
+        return new JavaValidatorGenerator().generate(compareDto(left, right),
+                List.of(new CompareFieldsRule("rule-compare", left.name(), op, right.name(), left.name(), "Compare fields")));
+    }
+
+    private static DtoSpec compareDto(FieldMeta left, FieldMeta right) {
+        return new DtoSpec(
+                "com.example",
+                "OrderDto",
+                Set.of(left.accessorName(), right.accessorName()),
+                List.of(left, right)
+        );
+    }
+
+    private static FieldMeta field(String name, String type, boolean primitive, boolean stringLike, boolean booleanLike, boolean numericLike, boolean enumLike, boolean referenceLike) {
+        return new FieldMeta(name, TypeRef.of(type, type.substring(type.lastIndexOf('.') + 1)), primitive, stringLike, booleanLike, numericLike, enumLike, referenceLike,
+                "get" + Character.toUpperCase(name.charAt(0)) + name.substring(1));
+    }
+
+    private void assertCompareFieldsCodeCompiles(CompareOp op, String fqType, String simpleType, String fieldDeclarations, String importLine) throws Exception {
+        Path sourceRoot = tempDir.resolve("compare" + System.nanoTime());
+        Path dtoDir = sourceRoot.resolve("com/example");
+        Path generatedDir = dtoDir.resolve("generated");
+        Files.createDirectories(generatedDir);
+
+        FieldMeta actual = field("actual", fqType, false, false, false, true, false, true);
+        FieldMeta expected = field("expected", fqType, false, false, false, true, false, true);
+        Files.writeString(dtoDir.resolve("OrderDto.java"), """
+                package com.example;
+
+                %s
+
+                public class OrderDto {
+                    %s
+
+                    public %s getActual() { return actual; }
+                    public %s getExpected() { return expected; }
+                }
+                """.formatted(importLine, fieldDeclarations, simpleType, simpleType));
+        Files.writeString(generatedDir.resolve("OrderDtoGeneratedValidator.java"), generateCompare(op, actual, expected));
+
+        var compiler = ToolProvider.getSystemJavaCompiler();
+        if (compiler == null) {
+            return;
+        }
+        int exitCode = compiler.run(null, null, null,
+                "-d", sourceRoot.toString(),
+                dtoDir.resolve("OrderDto.java").toString(),
+                generatedDir.resolve("OrderDtoGeneratedValidator.java").toString());
+        assertEquals(0, exitCode, "Generated compare-fields code should compile for " + fqType + " ordering.");
     }
 
     private List<?> validateRequiredIf(RequiredIfRule rule, String paymentMethod, String cardNumber, Object deliveryAddress, Boolean hasDiscount) throws Exception {
