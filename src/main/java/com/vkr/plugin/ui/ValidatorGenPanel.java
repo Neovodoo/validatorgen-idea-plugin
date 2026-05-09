@@ -121,8 +121,7 @@ public class ValidatorGenPanel implements ValidatorGenView {
         saveButton.addActionListener(e -> presenter.onSaveGenerated());
 
 
-        // initial
-        presenter.onRefreshFields();
+        showOutput("Click Refresh fields after the project finishes indexing.");
     }
 
     private void buildUi() {

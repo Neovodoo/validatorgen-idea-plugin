@@ -1,6 +1,7 @@
 package com.vkr.validatorgen.domain.validation;
 
 import com.vkr.validatorgen.domain.CompareFieldsRule;
+import com.vkr.validatorgen.domain.RequiredIfRule;
 import com.vkr.validatorgen.domain.DtoSpec;
 import com.vkr.validatorgen.domain.RuleKind;
 import com.vkr.validatorgen.domain.RuleSpec;
@@ -21,7 +22,8 @@ public final class RuleValidatorRegistry {
 
     public static RuleValidatorRegistry defaults() {
         return new RuleValidatorRegistry(Map.of(
-                RuleKind.COMPARE_FIELDS, new CompareFieldsRuleValidator()
+                RuleKind.COMPARE_FIELDS, new CompareFieldsRuleValidator(),
+                RuleKind.REQUIRED_IF, new RequiredIfRuleValidator()
         ));
     }
 
@@ -47,7 +49,7 @@ public final class RuleValidatorRegistry {
         if (rule instanceof com.vkr.validatorgen.domain.CompareRule compareRule) {
             return compareRule.toCompareFieldsRule();
         }
-        if (rule instanceof CompareFieldsRule) {
+        if (rule instanceof CompareFieldsRule || rule instanceof RequiredIfRule) {
             return rule;
         }
         return rule;

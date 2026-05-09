@@ -3,6 +3,8 @@ package com.vkr.validatorgen.infrastructure;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -78,10 +80,17 @@ public final class PsiDtoParser implements DtoParser {
     }
 
     private boolean isEnumType(PsiField field) {
+        if (DumbService.isDumb(project)) {
+            return false;
+        }
         PsiType type = field.getType();
         if (!(type instanceof PsiClassType classType)) return false;
-        PsiClass resolved = classType.resolve();
-        return resolved != null && resolved.isEnum();
+        try {
+            PsiClass resolved = classType.resolve();
+            return resolved != null && resolved.isEnum();
+        } catch (IndexNotReadyException ignored) {
+            return false;
+        }
     }
 
     private boolean isNumericType(String normalizedType) {

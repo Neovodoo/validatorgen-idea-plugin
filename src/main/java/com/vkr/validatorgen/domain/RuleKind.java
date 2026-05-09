@@ -1,5 +1,6 @@
 package com.vkr.validatorgen.domain;
 
 public enum RuleKind {
-    COMPARE_FIELDS
+    COMPARE_FIELDS,
+    REQUIRED_IF
 }

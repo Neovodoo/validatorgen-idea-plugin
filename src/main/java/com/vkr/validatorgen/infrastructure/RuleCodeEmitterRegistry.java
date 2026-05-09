@@ -25,7 +25,7 @@ public final class RuleCodeEmitterRegistry {
     }
 
     public static RuleCodeEmitterRegistry defaults() {
-        return new RuleCodeEmitterRegistry(List.of(new CompareFieldsRuleEmitter()));
+        return new RuleCodeEmitterRegistry(List.of(new CompareFieldsRuleEmitter(), new RequiredIfRuleEmitter()));
     }
 
     public RuleCode emit(DtoSpec dto, RuleSpec rule, int ruleIndex, JavaRuleCodeContext context) {
